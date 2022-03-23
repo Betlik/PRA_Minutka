@@ -144,7 +144,7 @@ int main(void)
         if (pozice == 1) {
             m++;
         }
-        if (pozice == 0) {
+        if (pozice == 2) {
             s++;
         }
         }
