@@ -3,8 +3,9 @@
 #include "milis.h"
 #include "stm8_hd44780.h"
 
-//#include "delay.h"
+#include "delay.h"
 #include <stdio.h>
+//#include "swi2c.h"
 //#include "uart1.h"
 
 #define _ISOC99_SOURCE
@@ -31,6 +32,7 @@ void setup(void)
  
     lcd_init(); //inicializace LCD
     init_milis();
+    //swi2c_init();
     //init_uart1();
 }
 
@@ -42,8 +44,19 @@ void cum_lcd(int h,int m,int s) {
     lcd_puts(text);
     
 }
-
+/*
+void delay_ms(uint16_t ms) {
+    uint16_t  i;
+    for (i=0; i<ms; i = i+1){
+        _delay_us(250);
+        _delay_us(248);
+        _delay_us(250);
+        _delay_us(250);
+    }
+}
+*/
 int main(void)
+
 {
     uint32_t time = 0;
     //uint32_t cum = 0;
@@ -52,6 +65,8 @@ int main(void)
     int m = 4;
     int s = 32;
     int pozice = 2; //vyjadřuje pozici měňění čísel 0 == h , 1 == m , 2 == s
+    int cum = 1;
+    
 
     _Bool minuly_stav_on_tlacitka=0; // 0=tlačítko bylo minule uvolněné, 1=tlačítko bylo minule stisknuté 
     _Bool minuly_stav_off_tlacitka=0; // 0=tlačítko bylo minule uvolněné, 1=tlačítko bylo minule stisknuté 
@@ -73,7 +88,6 @@ int main(void)
     _Bool minuly_stav_off_tlacitka5=0; // 0=tlačítko bylo minule uvolněné, 1=tlačítko bylo minule stisknuté 
     _Bool aktualni_stav_tlacitka5=0; // 0=tlačítko je uvolněné, 1= tlačítko je stisknuté
 
-
     setup();
     
     /*
@@ -82,7 +96,7 @@ int main(void)
     sprintf(text, "cas: %02d:%02d:%02d", h, m, s);
     lcd_puts(text);
     */
-
+    cum_lcd(h, m, s);
     while (1) {
  
         // tlacitko 1 / směr v pravo → /////////////////////////////////////////////////////////////////////////////////////////////// →
@@ -121,7 +135,12 @@ int main(void)
         LED_REVERSE; // pokud ano, rozsvítíme LEDku
         lcd_gotoxy(0,0);
         lcd_puts("2");
-        
+        if (pozice != 0) {
+            pozice--;
+        }
+        else {
+            pozice = 2;
+        }
         }
         minuly_stav_on_tlacitka2 = aktualni_stav_tlacitka2; // přepíšeme minulý stav tlačítka aktuálním
 
@@ -139,13 +158,28 @@ int main(void)
         lcd_gotoxy(0,0);
         lcd_puts("3");
         if (pozice == 0) {
-            h++;
+            if (h<23) {
+                h++;
+            }
+            else {
+                h = 0;
+            }   
         }
         if (pozice == 1) {
-            m++;
+            if (m<59) {
+                m++;
+            }
+            else {
+                m = 0;
+            }   
         }
         if (pozice == 2) {
-            s++;
+            if (s<59) {
+                s++;
+            }
+            else {
+                s = 0;
+            }
         }
         }
         minuly_stav_on_tlacitka3 = aktualni_stav_tlacitka3; // přepíšeme minulý stav tlačítka aktuálním
@@ -163,6 +197,31 @@ int main(void)
         LED_REVERSE; // pokud ano, rozsvítíme LEDku
         lcd_gotoxy(0,0);
         lcd_puts("4");
+        if (pozice == 0) {
+            if (h<24 && h>0) {
+                h--;
+            }
+            else {
+                h = 23;
+            }   
+        }
+        if (pozice == 1) {
+            if (m<60 && m>0) {
+                m--;
+            }
+            else {
+                m = 59;
+            }   
+        }
+        if (pozice == 2) {
+            if (s<60 && s>0) {
+                s--;
+            }
+            else {
+                s = 59;
+            }
+        }
+
        
         }
         minuly_stav_on_tlacitka4 = aktualni_stav_tlacitka4; // přepíšeme minulý stav tlačítka aktuálním
@@ -184,27 +243,93 @@ int main(void)
         }
         minuly_stav_on_tlacitka5 = aktualni_stav_tlacitka5; // přepíšeme minulý stav tlačítka aktuálním
 
-        cum_lcd(h, m, s);
+        //cum_lcd(h, m, s);
+        /*
+        if (pozice == 2) {
+        delay_ms(500);
+        lcd_gotoxy(11,1);
+        lcd_puts("  ");
+        delay_ms(500);
+        }
 
+        if (pozice == 1) {
+        delay_ms(500);
+        lcd_gotoxy(8,1);
+        lcd_puts("  ");
+        delay_ms(500);
+        }
+
+        if (pozice == 0) {
+        delay_ms(500);
+        lcd_gotoxy(5,1);
+        lcd_puts("  ");
+        delay_ms(500);
+        }
+        */
+
+        
         char text[16];
         lcd_gotoxy(3,0);
         sprintf(text, "%d", pozice);
         lcd_puts(text);
-        /*
-        if (pozice == 2 & milis() - time > 333 ) {
-            char text[16];
-            lcd_gotoxy(0,1);
-            sprintf(text, "cas: %02d:%02d:  ", h, m);
-            lcd_puts(text);
 
+
+
+
+
+
+
+        ///////////////////////////////////////////////////Blikání vybrané sekce
+        if (pozice == 2 && milis() - time > 500 ) {
+            if (cum == 1) {
+                lcd_gotoxy(11,1);
+                lcd_puts("  ");
+                cum = 0;
+                
+            }
+            else {
+                cum = 1;
+                cum_lcd(h, m, s);
+            }
+            
             time = milis();
         }
-        */
+        
+        if (pozice == 1 && milis() - time > 500 ) {
+            if (cum == 1) {
+                lcd_gotoxy(8,1);
+                lcd_puts("  ");
+                cum = 0;
+                
+            }
+            else {
+                cum = 1;
+                cum_lcd(h, m, s);
+
+            }
+            
+            time = milis();
+        }
+
+        if (pozice == 0 && milis() - time > 500 ) {
+            if (cum == 1) {
+                lcd_gotoxy(5,1);
+                lcd_puts("  ");
+                cum = 0;
+                
+            }
+            else {
+                cum = 1;
+                cum_lcd(h, m, s);
+            }
+            
+            time = milis();
+        }
 
         //LED_REVERSE; 
         //delay_ms(333);
         //printf("Funguje to!!!\n");
-
+        
     }
 }
 
