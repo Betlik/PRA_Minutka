@@ -53,7 +53,7 @@ int main(void){
     uint32_t ss = 0;
     //uint32_t cum = 0;
     //char text[32];
-    uint16_t h = 0;
+    uint16_t h = 1;
     uint16_t m = 1;
     uint16_t s = 8;
     int pozice = 2; //vyjadřuje pozici měňění čísel 0 == h , 1 == m , 2 == s
@@ -96,12 +96,12 @@ int main(void){
 
      /*error=swi2c_read_buf(0b11010000,0x00,precteno,4) */
     zapsano[0] = 0x00;  // sekundy
-    zapsano[1] = 0x52;  // minuty
-    zapsano[2] = 0x19;  // hodiny
+    zapsano[1] = 0x54;  // minuty
+    zapsano[2] = 0x22;  // hodiny
     
 
     // když tento řádek odkomentuješ, tak se čas zapíše do obvodu
-    swi2c_write_buf(0x68, 0x00, zapsano, 7);
+    //swi2c_write_buf(0x68, 0x00, zapsano, 7);
 
     cum_lcd(h, m, s);
     while (1) {
